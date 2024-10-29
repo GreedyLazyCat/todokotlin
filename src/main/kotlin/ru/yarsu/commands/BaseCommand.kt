@@ -5,12 +5,12 @@ import com.beust.jcommander.Parameter
 
 @Parameters(separators = "=")
 open class BaseCommand {
-    @Parameter(names = ["--tasks-file"], required = true, arity = 1)
+    @Parameter(names = ["--tasks-file"], arity = 1)
     var tasksFile: String? = null
 
-    @Parameter(names = ["--users-file"], required = true, arity = 1)
+    @Parameter(names = ["--users-file"], arity = 1)
     var usersFile: String? = null
 
-    @Parameter(names = ["--port"], required = true, arity = 1)
+    @Parameter(names = ["--port"], arity = 1)
     var port: Int? = null
 }
