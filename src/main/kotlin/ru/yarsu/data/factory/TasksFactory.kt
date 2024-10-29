@@ -6,30 +6,6 @@ import java.time.LocalDateTime
 import java.util.*
 
 class TasksFactory {
-    fun createTaskFromString(
-        id: String,
-        title: String,
-        registrationDateTime: String,
-        startDateTime: String,
-        endDateTime: String,
-        importance: String,
-        urgency: String,
-        percentage: String,
-        description: String
-        ): Task?{
-
-        return Task(
-            id = UUID.fromString(id),
-            title = title,
-            registrationDateTime = LocalDateTime.parse(registrationDateTime),
-            startDateTime = LocalDateTime.parse(startDateTime),
-            endDateTime = if(endDateTime == "") null else LocalDateTime.parse(endDateTime),
-            importance = TaskImportanceType.valueOf(importance),
-            urgency = urgency.toBoolean(),
-            percentage = percentage.toInt(),
-            description = description)
-    }
-
     fun createTaskFromStringList(
         list: List<String>
     ): Task?{
@@ -44,7 +20,8 @@ class TasksFactory {
                importance = TaskImportanceType.getByValue(list[5].trim()),
                urgency = list[6].toBoolean(),
                percentage = list[7].toInt(),
-               description = list[8])
+               description = list[8],
+               author = UUID.fromString(list[9]))
        }
        catch (e: Exception){
            return null

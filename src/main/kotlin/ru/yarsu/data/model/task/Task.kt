@@ -35,7 +35,9 @@ data class Task(
     val importance: TaskImportanceType,
     val urgency: Boolean,
     val percentage: Int,
-    val description: String
+    val description: String,
+    val author: UUID
     ) {
-
+    val isClose: Boolean
+        get() = this.percentage == 100
 }
