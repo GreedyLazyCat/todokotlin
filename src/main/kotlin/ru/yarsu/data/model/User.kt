@@ -7,6 +7,5 @@ data class User(
     val id: UUID,
     val login: String,
     val registrationDateTime: LocalDateTime,
-    val email: String
+    val email: String,
 )
-

@@ -1,7 +1,7 @@
 package ru.yarsu.commands
 
-import com.beust.jcommander.Parameters
 import com.beust.jcommander.Parameter
+import com.beust.jcommander.Parameters
 
 @Parameters(separators = "=")
 open class BaseCommand {
