@@ -8,4 +8,6 @@ interface ITaskStorage {
     fun sortedWith(comparator: Comparator<in Task>): List<Task>
 
     fun getById(id: UUID): Task?
+
+    fun filter(func: (Task) -> Boolean): List<Task>
 }
