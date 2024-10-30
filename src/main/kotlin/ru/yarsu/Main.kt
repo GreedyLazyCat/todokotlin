@@ -4,6 +4,7 @@ import com.beust.jcommander.JCommander
 import com.beust.jcommander.ParameterException
 import com.github.doyaaaaaken.kotlincsv.dsl.csvReader
 import org.http4k.core.*
+import org.http4k.routing.RoutingHttpHandler
 import org.http4k.routing.bind
 import org.http4k.routing.routes
 import org.http4k.server.Netty
@@ -13,6 +14,8 @@ import ru.yarsu.data.factory.UserFactory
 import ru.yarsu.data.model.task.Task
 import ru.yarsu.data.model.task.User
 import org.http4k.server.asServer
+import ru.yarsu.data.storage.TaskStorage
+import ru.yarsu.handlers.ListTasksHandler
 import java.io.File
 import kotlin.system.exitProcess
 
@@ -64,11 +67,18 @@ fun parseCommand(params: Array<String>): BaseCommand{
     return baseCommand
 }
 
-val app = routes(
-    "/ping" bind Method.GET to {
-        Response(Status.OK).body("Приложение запущено")
-    }
-)
+
+
+fun test(req: Request): Response{
+    return Response(Status.OK).body("lol")
+}
+
+fun createV1ApiRoutes(taskStorage: TaskStorage): RoutingHttpHandler{
+    val listTasksHandler = ListTasksHandler(taskStorage)
+    return routes(
+        "list-tasks" bind Method.GET to listTasksHandler
+    )
+}
 
 fun main(params: Array<String>) {
     try{
@@ -80,7 +90,18 @@ fun main(params: Array<String>) {
         val command = parseCommand(mockParams)
         val tasks = parseTasks(command.tasksFile ?: "")
         val users = parseUsers(command.usersFile ?: "")
-        val jettyServer = app.asServer(Netty(9000)).start()
+
+        val taskStorage = TaskStorage(tasks)
+        val apiRoutes = createV1ApiRoutes(taskStorage)
+
+        val app:HttpHandler = routes(
+            "ping" bind Method.GET to {
+                Response(Status.OK).body("Приложение запущено")
+            },
+            "v1" bind apiRoutes
+        )
+
+        val jettyServer = app.asServer(Netty(command.port ?: 9000)).start()
     }
     catch (e: Exception){
         println(e.message)

@@ -1,5 +1,10 @@
 package ru.yarsu.data.model.task
 
+import com.fasterxml.jackson.core.util.DefaultPrettyPrinter
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
+import com.fasterxml.jackson.datatype.jsr310.deser.JSR310StringParsableDeserializer
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.fasterxml.jackson.module.kotlin.jsonMapper
 import java.time.LocalDateTime
 import java.util.UUID
 
@@ -24,6 +29,10 @@ enum class TaskImportanceType(val eValue: String){
             throw NoSuchTaskTypeException(byValue);
         }
     }
+
+    override fun toString(): String {
+        return eValue
+    }
 }
 
 data class Task(
@@ -40,4 +49,11 @@ data class Task(
     ) {
     val isClose: Boolean
         get() = this.percentage == 100
+
+    fun toJson():String{
+        val mapper = jacksonObjectMapper()
+        mapper.registerModules(JavaTimeModule())
+        mapper.setDefaultPrettyPrinter(DefaultPrettyPrinter())
+        return mapper.writeValueAsString(this)
+    }
 }

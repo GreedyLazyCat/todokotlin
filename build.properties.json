@@ -5,6 +5,7 @@
     "com.jsoizo:kotlin-csv:1.10.0",
     "org.jcommander:jcommander:2.0",
     "org.http4k:http4k-core:5.33.0.0",
-    "org.http4k:http4k-server-netty:5.33.0.0"
+    "org.http4k:http4k-server-netty:5.33.0.0",
+    "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.18.0"
   ]
 }
