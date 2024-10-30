@@ -11,6 +11,7 @@ import org.http4k.core.findSingle
 import org.http4k.core.queries
 import ru.yarsu.data.model.task.Task
 import ru.yarsu.data.storage.TaskStorage
+import ru.yarsu.getPaginatedList
 
 class ListTasksHandler(
     private val storage: TaskStorage,
@@ -46,6 +47,11 @@ class ListTasksHandler(
         if (page <= 0) {
             throw IllegalArgumentException("Ожидалось значение страницы >= 1, передано $page")
         }
+        if (recordsPerPage <= 0) {
+            throw IllegalArgumentException(
+                "Ожидалось положительное значение количества элементов на странице>= 1, передано $recordsPerPage",
+            )
+        }
     }
 
     fun validateRecordsPerPage(recordsPerPage: Int) {
@@ -54,34 +60,19 @@ class ListTasksHandler(
         }
     }
 
-    fun getPageContents(
-        page: Int,
-        recordsPerPage: Int,
-    ): String {
-        val sortedTasks = storage.sortedWith(compareBy(Task::registrationDateTime, Task::id))
-        val end = page * recordsPerPage
-        val start = end - recordsPerPage
-        if (start >= sortedTasks.size) {
-            return "[ ]"
-        }
-
-        if ((start - 1) < sortedTasks.size && (end - 1) >= sortedTasks.size) {
-            return tasksToString(sortedTasks.subList(start, sortedTasks.size))
-        }
-
-        return tasksToString(sortedTasks.subList(start, end))
-    }
-
     override fun invoke(request: Request): Response {
         try {
             val queryParams = request.uri.queries()
             val page = (queryParams.findSingle("page") ?: "1").toInt()
             val recordsPerPage = (queryParams.findSingle("records-per-page") ?: "10").toInt()
+            val sortedTasks = storage.sortedWith(compareBy(Task::registrationDateTime, Task::id))
 
             validateRecordsPerPage(recordsPerPage)
             validatePage(page, recordsPerPage)
 
-            var body = getPageContents(page, recordsPerPage)
+            val tasks = getPaginatedList(page, recordsPerPage, sortedTasks)
+
+            val body = tasksToString(tasks)
 
             return Response(Status.OK).header("Content-type", "application/json").body(body)
         } catch (e: NumberFormatException) {

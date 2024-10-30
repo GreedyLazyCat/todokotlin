@@ -4,7 +4,6 @@ import com.beust.jcommander.JCommander
 import com.github.doyaaaaaken.kotlincsv.dsl.csvReader
 import org.http4k.core.HttpHandler
 import org.http4k.core.Method
-import org.http4k.core.Request
 import org.http4k.core.Response
 import org.http4k.core.Status
 import org.http4k.routing.RoutingHttpHandler
@@ -67,8 +66,6 @@ fun parseCommand(params: Array<String>): BaseCommand {
     commander.parse(*params)
     return baseCommand
 }
-
-fun test(req: Request): Response = Response(Status.OK).body("lol")
 
 fun createV1ApiRoutes(
     taskStorage: TaskStorage,
