@@ -4,6 +4,9 @@ import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import org.http4k.core.Parameters
 import org.http4k.core.findSingle
 import ru.yarsu.commands.RequestException
+import java.time.DayOfWeek
+import java.time.format.TextStyle
+import java.util.*
 
 val elementsPerPageValues = listOf(5, 10, 20, 50)
 
@@ -67,3 +70,17 @@ fun validateElementsPerPage(recordsPerPage: Int) {
         throw RequestException("Ожидалось одно из значений $elementsPerPageValues, передано $recordsPerPage")
     }
 }
+
+fun getRussianDayOfWeek(dayOfWeek: DayOfWeek): String? =
+    when (dayOfWeek.getDisplayName(TextStyle.FULL, Locale.US)) {
+        "Monday" -> "Понедельник"
+        "Tuesday" -> "Вторник"
+        "Wednesday" -> "Среда"
+        "Thursday" -> "Четверг"
+        "Friday" -> "Пятница"
+        "Saturday" -> "Суббота"
+        "Sunday" -> "Воскресенье"
+        else -> {
+            null
+        }
+    }

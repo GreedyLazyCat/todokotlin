@@ -22,6 +22,7 @@ import ru.yarsu.data.storage.UserStorage
 import ru.yarsu.handlers.ListEisenhowerHandler
 import ru.yarsu.handlers.ListTasksHandler
 import ru.yarsu.handlers.ListTimeHandler
+import ru.yarsu.handlers.StatisticHandler
 import ru.yarsu.handlers.TaskByIdHandler
 import java.io.File
 import java.io.FileNotFoundException
@@ -78,6 +79,7 @@ fun createV1ApiRoutes(
     val taskByIdHandler = TaskByIdHandler(taskStorage, userStorage)
     val listEisenhowerHandler = ListEisenhowerHandler(taskStorage)
     val listTimeHandler = ListTimeHandler(taskStorage)
+    val statisticHandler = StatisticHandler(taskStorage)
 
     val taskRoutes =
         routes(
@@ -89,6 +91,7 @@ fun createV1ApiRoutes(
         "task/{task-id}" bind Method.GET to taskByIdHandler,
         "list-eisenhower" bind Method.GET to listEisenhowerHandler,
         "list-time" bind Method.GET to listTimeHandler,
+        "statistic" bind Method.GET to statisticHandler,
     )
 }
 

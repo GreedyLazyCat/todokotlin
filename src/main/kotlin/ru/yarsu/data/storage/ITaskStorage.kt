@@ -10,4 +10,6 @@ interface ITaskStorage {
     fun getById(id: UUID): Task?
 
     fun filter(func: (Task) -> Boolean): List<Task>
+
+    fun getTasks(): List<Task>
 }
