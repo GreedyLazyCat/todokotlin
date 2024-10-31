@@ -1,6 +1,7 @@
 package ru.yarsu
 
 import com.beust.jcommander.JCommander
+import com.beust.jcommander.ParameterException
 import com.github.doyaaaaaken.kotlincsv.dsl.csvReader
 import org.http4k.core.HttpHandler
 import org.http4k.core.Method
@@ -18,16 +19,18 @@ import ru.yarsu.data.model.task.Task
 import ru.yarsu.data.model.task.User
 import ru.yarsu.data.storage.TaskStorage
 import ru.yarsu.data.storage.UserStorage
+import ru.yarsu.handlers.ListEisenhowerHandler
 import ru.yarsu.handlers.ListTasksHandler
+import ru.yarsu.handlers.ListTimeHandler
 import ru.yarsu.handlers.TaskByIdHandler
 import java.io.File
+import java.io.FileNotFoundException
 import kotlin.system.exitProcess
 
 fun parseTasks(filePath: String): List<Task> {
     System.setProperty("file.encoding", "UTF8")
     var result: MutableList<Task> = mutableListOf()
     val file = File(filePath)
-    println(file.absolutePath)
 
     csvReader().open(file) {
         readAllAsSequence().forEach { row: List<String> ->
@@ -73,6 +76,8 @@ fun createV1ApiRoutes(
 ): RoutingHttpHandler {
     val listTasksHandler = ListTasksHandler(taskStorage)
     val taskByIdHandler = TaskByIdHandler(taskStorage, userStorage)
+    val listEisenhowerHandler = ListEisenhowerHandler(taskStorage)
+    val listTimeHandler = ListTimeHandler(taskStorage)
 
     val taskRoutes =
         routes(
@@ -82,6 +87,8 @@ fun createV1ApiRoutes(
     return routes(
         "list-tasks" bind Method.GET to listTasksHandler,
         "task/{task-id}" bind Method.GET to taskByIdHandler,
+        "list-eisenhower" bind Method.GET to listEisenhowerHandler,
+        "list-time" bind Method.GET to listTimeHandler,
     )
 }
 
@@ -111,7 +118,10 @@ fun main(params: Array<String>) {
             )
 
         app.asServer(Netty(command.port ?: 9000)).start()
-    } catch (e: Exception) {
+    } catch (e: ParameterException) {
+        println(e.message)
+        exitProcess(1)
+    } catch (e: FileNotFoundException) {
         println(e.message)
         exitProcess(1)
     }

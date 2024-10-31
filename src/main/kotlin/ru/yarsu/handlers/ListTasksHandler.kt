@@ -7,17 +7,17 @@ import org.http4k.core.HttpHandler
 import org.http4k.core.Request
 import org.http4k.core.Response
 import org.http4k.core.Status
-import org.http4k.core.findSingle
 import org.http4k.core.queries
+import ru.yarsu.commands.RequestException
 import ru.yarsu.data.model.task.Task
 import ru.yarsu.data.storage.TaskStorage
+import ru.yarsu.generateErrorBody
 import ru.yarsu.getPaginatedList
+import ru.yarsu.validatePagination
 
 class ListTasksHandler(
     private val storage: TaskStorage,
 ) : HttpHandler {
-    private val recordsPerPageValues = listOf(5, 10, 20, 50)
-
     fun tasksToString(tasks: List<Task>): String {
         val mapper = jacksonObjectMapper()
         mapper.registerModules(JavaTimeModule())
@@ -33,44 +33,12 @@ class ListTasksHandler(
         return mapper.writeValueAsString(array)
     }
 
-    fun generateErrorBody(text: String): String {
-        val mapper = jacksonObjectMapper()
-        val node = mapper.createObjectNode()
-        node.put("error", text)
-        return mapper.writeValueAsString(node)
-    }
-
-    fun validatePage(
-        page: Int,
-        recordsPerPage: Int,
-    ) {
-        if (page <= 0) {
-            throw IllegalArgumentException("Ожидалось значение страницы >= 1, передано $page")
-        }
-        if (recordsPerPage <= 0) {
-            throw IllegalArgumentException(
-                "Ожидалось положительное значение количества элементов на странице>= 1, передано $recordsPerPage",
-            )
-        }
-    }
-
-    fun validateRecordsPerPage(recordsPerPage: Int) {
-        if (!recordsPerPageValues.contains(recordsPerPage)) {
-            throw IllegalArgumentException("Ожидалось одно из значений $recordsPerPageValues, передано $recordsPerPage")
-        }
-    }
-
     override fun invoke(request: Request): Response {
         try {
             val queryParams = request.uri.queries()
-            val page = (queryParams.findSingle("page") ?: "1").toInt()
-            val recordsPerPage = (queryParams.findSingle("records-per-page") ?: "10").toInt()
             val sortedTasks = storage.sortedWith(compareBy(Task::registrationDateTime, Task::id))
 
-            validateRecordsPerPage(recordsPerPage)
-            validatePage(page, recordsPerPage)
-
-            val tasks = getPaginatedList(page, recordsPerPage, sortedTasks)
+            val tasks = getPaginatedList(queryParams, sortedTasks, ::validatePagination)
 
             val body = tasksToString(tasks)
 
@@ -79,7 +47,7 @@ class ListTasksHandler(
             return Response(Status.BAD_REQUEST)
                 .header("Content-type", "application/json")
                 .body(generateErrorBody("Ожидалось натуральное число в параметре page"))
-        } catch (e: IllegalArgumentException) {
+        } catch (e: RequestException) {
             return Response(Status.BAD_REQUEST)
                 .header("Content-type", "application/json")
                 .body(generateErrorBody(e.message ?: ""))

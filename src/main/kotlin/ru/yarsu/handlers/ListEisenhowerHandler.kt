@@ -7,10 +7,12 @@ import org.http4k.core.Response
 import org.http4k.core.Status
 import org.http4k.core.findSingle
 import org.http4k.core.queries
-import ru.yarsu.commands.CommandException
+import ru.yarsu.commands.RequestException
 import ru.yarsu.data.model.task.Task
 import ru.yarsu.data.storage.ITaskStorage
+import ru.yarsu.generateErrorBody
 import ru.yarsu.getPaginatedList
+import ru.yarsu.validatePagination
 
 class ListEisenhowerHandler(
     private val storage: ITaskStorage,
@@ -22,13 +24,13 @@ class ListEisenhowerHandler(
         urgentString: String?,
     ) {
         if (importantString == null && urgentString == null) {
-            throw CommandException("There must be either an 'important' or 'urgent' key")
+            throw RequestException("В параметрах должны быть указаны хотя бы один из ключей 'important' или 'urgent'.")
         }
         if (importantString == "" || urgentString == "") {
-            throw CommandException("'important' or 'urgent' parameters are empty")
+            throw RequestException("Параметры 'important' и 'urgent' не должны быть пустыми.")
         }
-        if (!allowedValues.contains(importantString) || allowedValues.contains(urgentString)) {
-            throw CommandException("'important' or 'urgent' must be boolean")
+        if (!allowedValues.contains(importantString ?: allowedValues[0]) || !allowedValues.contains(urgentString ?: allowedValues[0])) {
+            throw RequestException("Параметры 'important' и 'urgent' должны быть булевыми.")
         }
     }
 
@@ -51,23 +53,25 @@ class ListEisenhowerHandler(
     override fun invoke(request: Request): Response {
         val sortedTasks = storage.sortedWith(compareBy(Task::registrationDateTime, Task::id))
         val queryParams = request.uri.queries()
-        val page = (queryParams.findSingle("page") ?: "1").toInt()
-        val recordsPerPage = (queryParams.findSingle("records-per-page") ?: "10").toInt()
         val importantString = queryParams.findSingle("important")
         val urgentString = queryParams.findSingle("urgent")
 
-        validateQueries(importantString, urgentString)
+        try {
+            validateQueries(importantString, urgentString)
 
-        var filteredTasks =
-            sortedTasks.filter {
-                val important =
-                    if (importantString == null) true else (it.importance.ordinal > 2 == importantString.toBoolean())
-                var urgent = if (urgentString == null) true else (it.urgency == urgentString.toBoolean())
-                important && urgent
-            }
+            var filteredTasks =
+                sortedTasks.filter {
+                    val important =
+                        if (importantString == null) true else (it.importance.ordinal > 2 == importantString.toBoolean())
+                    var urgent = if (urgentString == null) true else (it.urgency == urgentString.toBoolean())
+                    important && urgent
+                }
 
-        filteredTasks = getPaginatedList(page, recordsPerPage, filteredTasks)
+            filteredTasks = getPaginatedList(queryParams, filteredTasks, ::validatePagination)
 
-        return Response(Status.OK).header("Content-type", "application/json").body(generateResponseBody(filteredTasks))
+            return Response(Status.OK).header("Content-type", "application/json").body(generateResponseBody(filteredTasks))
+        } catch (e: RequestException) {
+            return Response(Status.BAD_REQUEST).header("Content-type", "application/json").body(generateErrorBody(e.message.toString()))
+        }
     }
 }
