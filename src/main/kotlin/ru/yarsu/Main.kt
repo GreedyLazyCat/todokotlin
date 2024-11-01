@@ -89,6 +89,11 @@ fun createV1ApiRoutes(
     return routes(
         "list-tasks" bind Method.GET to listTasksHandler,
         "task/{task-id}" bind Method.GET to taskByIdHandler,
+        "task" bind Method.GET to {
+            Response(
+                Status.BAD_REQUEST,
+            ).header("Content-type", "application/json").body(generateErrorBody("Отсутствует обязательный параметр task-id"))
+        },
         "list-eisenhower" bind Method.GET to listEisenhowerHandler,
         "list-time" bind Method.GET to listTimeHandler,
         "statistic" bind Method.GET to statisticHandler,

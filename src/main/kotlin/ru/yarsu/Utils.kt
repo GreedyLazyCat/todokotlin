@@ -6,7 +6,7 @@ import org.http4k.core.findSingle
 import ru.yarsu.commands.RequestException
 import java.time.DayOfWeek
 import java.time.format.TextStyle
-import java.util.*
+import java.util.Locale
 
 val elementsPerPageValues = listOf(5, 10, 20, 50)
 
@@ -47,10 +47,10 @@ fun validatePagination(queryParams: Parameters) {
     val elementsPerPage = (elementsPerPageParsed ?: "10").toIntOrNull()
 
     if (page == null) {
-        throw RequestException("Ожидалось целочисленное значение page, передано $parsedPage")
+        throw RequestException("Некорректное значение параметра page. Ожидается натуральное число, но получено $parsedPage")
     }
     if (elementsPerPage == null) {
-        throw RequestException("Ожидалось целочисленное значение records-per-page, передано $elementsPerPageParsed")
+        throw RequestException("Некорректное значение параметра page. Ожидается натуральное число, но получено $elementsPerPageParsed")
     }
     if (page <= 0) {
         throw RequestException("Ожидалось значение страницы >= 1, передано $page")
