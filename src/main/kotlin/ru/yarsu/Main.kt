@@ -102,13 +102,13 @@ fun createV1ApiRoutes(
 
 fun main(params: Array<String>) {
     try {
-        val mockParams =
-            arrayOf(
-                "--tasks-file=src/main/resources/tasks.csv",
-                "--users-file=src/main/resources/users.csv",
-                "--port=9000",
-            )
-        val command = parseCommand(mockParams)
+//        val mockParams =
+//            arrayOf(
+//                "--tasks-file=src/main/resources/tasks.csv",
+//                "--users-file=src/main/resources/users.csv",
+//                "--port=9000",
+//            )
+        val command = parseCommand(params)
         val tasks = parseTasks(command.tasksFile ?: "")
         val users = parseUsers(command.usersFile ?: "")
 

@@ -1,9 +1,8 @@
 package ru.yarsu.commands
 
 import com.beust.jcommander.Parameter
-import com.beust.jcommander.Parameters
 
-@Parameters(separators = "=")
+// @Parameters(separators = "=")
 open class BaseCommand {
     @Parameter(names = ["--tasks-file"], required = true, arity = 1)
     var tasksFile: String? = null
