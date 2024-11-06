@@ -106,7 +106,7 @@ class StatisticHandler(
         try {
             val fieldName = validateByDateAndGetFieldName(byDate)
 
-            return Response(Status.BAD_REQUEST)
+            return Response(Status.OK)
                 .header("Content-type", "application/json")
                 .body(genrateResponse(storage.getTasks(), byDate, fieldName))
         } catch (e: RequestException) {
