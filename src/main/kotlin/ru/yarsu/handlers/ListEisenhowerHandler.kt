@@ -1,12 +1,14 @@
 package ru.yarsu.handlers
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import org.http4k.core.ContentType
 import org.http4k.core.HttpHandler
 import org.http4k.core.Request
 import org.http4k.core.Response
 import org.http4k.core.Status
 import org.http4k.core.findSingle
 import org.http4k.core.queries
+import org.http4k.lens.contentType
 import ru.yarsu.commands.RequestException
 import ru.yarsu.data.model.task.Task
 import ru.yarsu.data.storage.ITaskStorage
@@ -69,9 +71,9 @@ class ListEisenhowerHandler(
 
             filteredTasks = getPaginatedList(queryParams, filteredTasks, ::validatePagination)
 
-            return Response(Status.OK).header("Content-type", "application/json").body(generateResponseBody(filteredTasks))
+            return Response(Status.OK).contentType(ContentType.APPLICATION_JSON).body(generateResponseBody(filteredTasks))
         } catch (e: RequestException) {
-            return Response(Status.BAD_REQUEST).header("Content-type", "application/json").body(generateErrorBody(e.message.toString()))
+            return Response(Status.BAD_REQUEST).contentType(ContentType.APPLICATION_JSON).body(generateErrorBody(e.message.toString()))
         }
     }
 }

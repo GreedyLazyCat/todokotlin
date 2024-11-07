@@ -3,11 +3,13 @@ package ru.yarsu.handlers
 import com.fasterxml.jackson.core.util.DefaultPrettyPrinter
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import org.http4k.core.ContentType
 import org.http4k.core.HttpHandler
 import org.http4k.core.Request
 import org.http4k.core.Response
 import org.http4k.core.Status
 import org.http4k.core.queries
+import org.http4k.lens.contentType
 import ru.yarsu.commands.RequestException
 import ru.yarsu.data.model.task.Task
 import ru.yarsu.data.storage.TaskStorage
@@ -27,7 +29,7 @@ class ListTasksHandler(
             val node = mapper.createObjectNode()
             node.put("Id", "${task.id}")
             node.put("Title", "${task.title}")
-            node.put("IsClose", "${task.isClose}")
+            node.put("IsClosed", task.isClosed)
             array.add(node)
         }
         return mapper.writeValueAsString(array)
@@ -42,14 +44,14 @@ class ListTasksHandler(
 
             val body = tasksToString(tasks)
 
-            return Response(Status.OK).header("Content-type", "application/json").body(body)
+            return Response(Status.OK).contentType(ContentType.APPLICATION_JSON).body(body)
         } catch (e: NumberFormatException) {
             return Response(Status.BAD_REQUEST)
-                .header("Content-type", "application/json")
+                .contentType(ContentType.APPLICATION_JSON)
                 .body(generateErrorBody("Ожидалось натуральное число в параметре page"))
         } catch (e: RequestException) {
             return Response(Status.BAD_REQUEST)
-                .header("Content-type", "application/json")
+                .contentType(ContentType.APPLICATION_JSON)
                 .body(generateErrorBody(e.message ?: ""))
         }
     }

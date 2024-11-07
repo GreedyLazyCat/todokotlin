@@ -3,10 +3,12 @@ package ru.yarsu
 import com.beust.jcommander.JCommander
 import com.beust.jcommander.ParameterException
 import com.github.doyaaaaaken.kotlincsv.dsl.csvReader
+import org.http4k.core.ContentType
 import org.http4k.core.HttpHandler
 import org.http4k.core.Method
 import org.http4k.core.Response
 import org.http4k.core.Status
+import org.http4k.lens.contentType
 import org.http4k.routing.RoutingHttpHandler
 import org.http4k.routing.bind
 import org.http4k.routing.routes
@@ -92,7 +94,7 @@ fun createV1ApiRoutes(
         "task" bind Method.GET to {
             Response(
                 Status.BAD_REQUEST,
-            ).header("Content-type", "application/json").body(generateErrorBody("Отсутствует обязательный параметр task-id"))
+            ).contentType(ContentType.APPLICATION_JSON).body(generateErrorBody("Отсутствует обязательный параметр task-id"))
         },
         "list-eisenhower" bind Method.GET to listEisenhowerHandler,
         "list-time" bind Method.GET to listTimeHandler,

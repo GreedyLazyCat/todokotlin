@@ -1,12 +1,14 @@
 package ru.yarsu.handlers
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import org.http4k.core.ContentType
 import org.http4k.core.HttpHandler
 import org.http4k.core.Request
 import org.http4k.core.Response
 import org.http4k.core.Status
 import org.http4k.core.findSingle
 import org.http4k.core.queries
+import org.http4k.lens.contentType
 import ru.yarsu.commands.RequestException
 import ru.yarsu.data.model.task.Task
 import ru.yarsu.data.storage.TaskStorage
@@ -96,7 +98,7 @@ class StatisticHandler(
         if (byDate == "end" && results.containsKey("Не заполнено")) {
             datesInfoNode.put("Не заполнено", results["Не заполнено"])
         }
-        resultNode.put(fieldName, datesInfoNode)
+        resultNode.putIfAbsent(fieldName, datesInfoNode)
         return mapper.writeValueAsString(resultNode)
     }
 
@@ -107,11 +109,11 @@ class StatisticHandler(
             val fieldName = validateByDateAndGetFieldName(byDate)
 
             return Response(Status.OK)
-                .header("Content-type", "application/json")
+                .contentType(ContentType.APPLICATION_JSON)
                 .body(genrateResponse(storage.getTasks(), byDate, fieldName))
         } catch (e: RequestException) {
             return Response(Status.BAD_REQUEST)
-                .header("Content-type", "application/json")
+                .contentType(ContentType.APPLICATION_JSON)
                 .body(generateErrorBody(e.message.toString()))
         }
     }

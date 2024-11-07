@@ -49,7 +49,7 @@ data class Task(
     val description: String,
     val author: UUID,
 ) {
-    val isClose: Boolean
+    val isClosed: Boolean
         get() = this.percentage == 100
 
     fun toJson(): String {
