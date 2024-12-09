@@ -1,14 +1,30 @@
 package ru.yarsu
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import org.http4k.core.ContentType
+import org.http4k.core.Filter
+import org.http4k.core.HttpHandler
 import org.http4k.core.Parameters
 import org.http4k.core.findSingle
+import org.http4k.lens.contentType
 import ru.yarsu.commands.RequestException
 import java.time.DayOfWeek
 import java.time.format.TextStyle
 import java.util.Locale
 
 val elementsPerPageValues = listOf(5, 10, 20, 50)
+
+val jsonContentTypeFilter =
+    Filter { next: HttpHandler ->
+        { request ->
+            val response = next(request)
+            if (response.bodyString().isNotEmpty()) {
+                response.contentType(ContentType.APPLICATION_JSON)
+            } else {
+                response
+            }
+        }
+    }
 
 fun generateErrorBody(text: String): String {
     val mapper = jacksonObjectMapper()

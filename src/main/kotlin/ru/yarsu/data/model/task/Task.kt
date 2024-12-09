@@ -48,6 +48,7 @@ data class Task(
     val percentage: Int,
     val description: String,
     val author: UUID,
+    val category: UUID,
 ) {
     val isClosed: Boolean
         get() = this.percentage == 100
@@ -74,6 +75,7 @@ data class Task(
         node.put("Percentage", percentage)
         node.put("Description", description)
         node.put("Author", author.toString())
+        node.put("Category", category.toString())
 
         return node
     }

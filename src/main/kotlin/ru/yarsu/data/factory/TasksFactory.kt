@@ -20,6 +20,7 @@ class TasksFactory {
                 percentage = list[7].toInt(),
                 description = list[8],
                 author = UUID.fromString(list[9]),
+                category = UUID.fromString(list[10]),
             )
         } catch (e: Exception) {
             return null

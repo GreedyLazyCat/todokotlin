@@ -1,4 +1,4 @@
-package ru.yarsu.handlers
+package ru.yarsu.handlers.v1
 
 import com.fasterxml.jackson.core.util.DefaultPrettyPrinter
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
@@ -44,7 +44,7 @@ class ListTasksHandler(
 
             val body = tasksToString(tasks)
 
-            return Response(Status.OK).contentType(ContentType.APPLICATION_JSON).body(body)
+            return Response(Status.OK).body(body)
         } catch (e: NumberFormatException) {
             return Response(Status.BAD_REQUEST)
                 .contentType(ContentType.APPLICATION_JSON)

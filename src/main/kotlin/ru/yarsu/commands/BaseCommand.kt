@@ -10,6 +10,9 @@ open class BaseCommand {
     @Parameter(names = ["--users-file"], required = true, arity = 1)
     var usersFile: String? = null
 
+    @Parameter(names = ["--categories-file"], required = true, arity = 1)
+    var categoriesFile: String? = null
+
     @Parameter(names = ["--port"], required = true, arity = 1)
     var port: Int? = null
 }

@@ -8,6 +8,7 @@ import org.http4k.core.HttpHandler
 import org.http4k.core.Method
 import org.http4k.core.Response
 import org.http4k.core.Status
+import org.http4k.core.then
 import org.http4k.lens.contentType
 import org.http4k.routing.RoutingHttpHandler
 import org.http4k.routing.bind
@@ -15,17 +16,20 @@ import org.http4k.routing.routes
 import org.http4k.server.Netty
 import org.http4k.server.asServer
 import ru.yarsu.commands.BaseCommand
+import ru.yarsu.data.factory.CategoryFactory
 import ru.yarsu.data.factory.TasksFactory
 import ru.yarsu.data.factory.UserFactory
+import ru.yarsu.data.model.Category
 import ru.yarsu.data.model.task.Task
 import ru.yarsu.data.model.task.User
+import ru.yarsu.data.storage.CategoryStorage
 import ru.yarsu.data.storage.TaskStorage
 import ru.yarsu.data.storage.UserStorage
-import ru.yarsu.handlers.ListEisenhowerHandler
-import ru.yarsu.handlers.ListTasksHandler
-import ru.yarsu.handlers.ListTimeHandler
-import ru.yarsu.handlers.StatisticHandler
-import ru.yarsu.handlers.TaskByIdHandler
+import ru.yarsu.handlers.v1.ListEisenhowerHandler
+import ru.yarsu.handlers.v1.ListTasksHandler
+import ru.yarsu.handlers.v1.ListTimeHandler
+import ru.yarsu.handlers.v1.StatisticHandler
+import ru.yarsu.handlers.v1.TaskByIdHandler
 import java.io.File
 import java.io.FileNotFoundException
 import kotlin.system.exitProcess
@@ -57,6 +61,23 @@ fun parseUsers(filePath: String): List<User> {
             val user: User? = UserFactory().createFromStringList(row)
             if (user != null) {
                 result.add(user)
+            }
+        }
+    }
+
+    return result
+}
+
+fun parseCategories(filePath: String): List<Category> {
+    System.setProperty("file.encoding", "UTF8")
+    var result: MutableList<Category> = mutableListOf()
+    val file: File = File(filePath)
+
+    csvReader().open(file) {
+        readAllAsSequence().forEach { row: List<String> ->
+            val category: Category? = CategoryFactory().createFromStringList(row)
+            if (category != null) {
+                result.add(category)
             }
         }
     }
@@ -102,6 +123,34 @@ fun createV1ApiRoutes(
     )
 }
 
+fun createV2ApiRoutes(
+    taskStorage: TaskStorage,
+    userStorage: UserStorage,
+    categoryStorage: CategoryStorage,
+): RoutingHttpHandler {
+    val listTasksHandler = ListTasksHandler(taskStorage)
+    val taskByIdHandler = TaskByIdHandler(taskStorage, userStorage)
+    val listEisenhowerHandler = ListEisenhowerHandler(taskStorage)
+    val listTimeHandler = ListTimeHandler(taskStorage)
+    val statisticHandler = StatisticHandler(taskStorage)
+
+    return jsonContentTypeFilter.then(
+        routes(
+            "tasks" bind Method.GET to listTasksHandler,
+            // TODO: tasks POST
+            "tasks/{task-id}" bind Method.GET to taskByIdHandler,
+            // TODO: tasks/{task-id} PUT
+            "tasks/eisenhower" bind Method.GET to listEisenhowerHandler,
+            "tasks/by-time" bind Method.GET to listTimeHandler,
+            "tasks/statistics" bind Method.GET to statisticHandler,
+            // TODO: categories GET list of all categories
+            // TODO: categories/{category-id} PUT payload - form!!!
+            // TODO: users GET list of all users
+            // TODO: users/{user-id} DELETE
+        ),
+    )
+}
+
 fun main(params: Array<String>) {
     try {
 //        val mockParams =
@@ -113,11 +162,14 @@ fun main(params: Array<String>) {
         val command = parseCommand(params)
         val tasks = parseTasks(command.tasksFile ?: "")
         val users = parseUsers(command.usersFile ?: "")
+        val categories = parseCategories(command.categoriesFile ?: "")
 
         val taskStorage = TaskStorage(tasks)
         val userStorage = UserStorage(users)
+        val categoryStorage = CategoryStorage(categories)
 
         val apiRoutes = createV1ApiRoutes(taskStorage, userStorage)
+        val apiRoutesV2 = createV2ApiRoutes(taskStorage, userStorage, categoryStorage)
 
         val app: HttpHandler =
             routes(
@@ -125,6 +177,7 @@ fun main(params: Array<String>) {
                     Response(Status.OK).body("Приложение запущено")
                 },
                 "v1" bind apiRoutes,
+                "v2" bind apiRoutesV2,
             )
 
         app.asServer(Netty(command.port ?: 9000)).start()
