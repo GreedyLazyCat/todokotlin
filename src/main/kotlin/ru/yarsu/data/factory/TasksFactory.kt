@@ -1,5 +1,6 @@
 package ru.yarsu.data.factory
 
+import com.fasterxml.jackson.databind.JsonNode
 import ru.yarsu.data.model.task.Task
 import ru.yarsu.data.model.task.TaskImportanceType
 import java.time.LocalDateTime
@@ -25,5 +26,46 @@ class TasksFactory {
         } catch (e: Exception) {
             return null
         }
+    }
+
+    fun createTaskFromJson(jsonNode: JsonNode): Task {
+        val newId = UUID.randomUUID()
+        return Task(
+            id = newId,
+            title = jsonNode.get("Title").asText(),
+            registrationDateTime =
+                if (jsonNode.has(
+                        "RegistrationDateTime",
+                    )
+                ) {
+                    LocalDateTime.parse(jsonNode.get("RegistrationDateTime").asText())
+                } else {
+                    LocalDateTime.now()
+                },
+            endDateTime =
+                if (jsonNode.has(
+                        "EndDateTime",
+                    )
+                ) {
+                    LocalDateTime.parse(jsonNode.get("EndDateTime").asText())
+                } else {
+                    null
+                },
+            startDateTime =
+                if (jsonNode.has(
+                        "StartDateTime",
+                    )
+                ) {
+                    LocalDateTime.parse(jsonNode.get("RegistrationDateTime").asText())
+                } else {
+                    LocalDateTime.now()
+                },
+            importance = TaskImportanceType.VERY_HIGH,
+            urgency = false,
+            author = UUID.randomUUID(),
+            category = UUID.randomUUID(),
+            description = "",
+            percentage = 10,
+        )
     }
 }

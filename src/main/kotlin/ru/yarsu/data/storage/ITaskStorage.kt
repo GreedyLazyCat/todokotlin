@@ -12,4 +12,6 @@ interface ITaskStorage {
     fun filter(func: (Task) -> Boolean): List<Task>
 
     fun getTasks(): List<Task>
+
+    fun addTask(task: Task)
 }

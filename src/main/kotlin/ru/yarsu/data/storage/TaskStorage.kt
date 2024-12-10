@@ -7,7 +7,7 @@ import kotlin.Comparator
 class TaskStorage(
     tasksInit: List<Task>,
 ) : ITaskStorage {
-    private val tasks: List<Task> = tasksInit
+    private val tasks: MutableList<Task> = tasksInit.toMutableList()
 
     override fun sortedWith(comparator: Comparator<in Task>): List<Task> = tasks.sortedWith(comparator)
 
@@ -16,4 +16,8 @@ class TaskStorage(
     override fun filter(func: (Task) -> Boolean): List<Task> = tasks.filter(func)
 
     override fun getTasks(): List<Task> = tasks
+
+    override fun addTask(task: Task) {
+        tasks.add(task)
+    }
 }

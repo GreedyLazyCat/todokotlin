@@ -1,10 +1,13 @@
 package ru.yarsu
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.fasterxml.jackson.module.kotlin.jsonMapper
 import org.http4k.core.ContentType
 import org.http4k.core.Filter
 import org.http4k.core.HttpHandler
 import org.http4k.core.Parameters
+import org.http4k.core.Request
+import org.http4k.core.Response
 import org.http4k.core.findSingle
 import org.http4k.lens.contentType
 import ru.yarsu.commands.RequestException
@@ -13,6 +16,18 @@ import java.time.format.TextStyle
 import java.util.Locale
 
 val elementsPerPageValues = listOf(5, 10, 20, 50)
+
+fun requestExceptionFilter(): Filter =
+    Filter { next: HttpHandler ->
+        { request: Request ->
+            try {
+                next(request)
+            } catch (requestException: RequestException) {
+                Response(requestException.status)
+                    .body("${requestException.message}")
+            }
+        }
+    }
 
 val jsonContentTypeFilter =
     Filter { next: HttpHandler ->
@@ -26,10 +41,16 @@ val jsonContentTypeFilter =
         }
     }
 
-fun generateErrorBody(text: String): String {
+fun generateErrorBody(
+    text: String,
+    value: String? = "",
+): String {
     val mapper = jacksonObjectMapper()
     val node = mapper.createObjectNode()
-    node.put("error", text)
+    node.put("Error", text)
+    if (value != null) {
+        node.put("Value", value)
+    }
     return mapper.writeValueAsString(node)
 }
 
@@ -100,3 +121,12 @@ fun getRussianDayOfWeek(dayOfWeek: DayOfWeek): String? =
             null
         }
     }
+
+fun simpleMapStringToJsonString(inMap: Map<String, String>): String {
+    val mapper = jsonMapper()
+    val node = mapper.createObjectNode()
+    for (key in inMap.keys) {
+        node.put(key, inMap[key])
+    }
+    return mapper.writeValueAsString(node)
+}

@@ -1,7 +1,14 @@
 package ru.yarsu.commands
 
-class RequestException : Exception {
-    constructor() : super()
+import org.http4k.core.Status
 
-    constructor(message: String) : super(message)
+class RequestException : Exception {
+    val status: Status
+    constructor() : super() {
+        status = Status.BAD_REQUEST
+    }
+
+    constructor(message: String, status: Status = Status.BAD_REQUEST) : super(message) {
+        this.status = status
+    }
 }
