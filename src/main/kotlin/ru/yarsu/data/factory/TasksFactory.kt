@@ -30,18 +30,22 @@ class TasksFactory {
 
     fun createTaskFromJson(jsonNode: JsonNode): Task {
         val newId = UUID.randomUUID()
+        val authorUUID = UUID.fromString(jsonNode.get("Author").asText())
+        val categoryUUID = UUID.fromString(jsonNode.get("Category").asText())
+        val registrationDateTime =
+            if (jsonNode.has(
+                    "RegistrationDateTime",
+                )
+            ) {
+                LocalDateTime.parse(jsonNode.get("RegistrationDateTime").asText())
+            } else {
+                LocalDateTime.now()
+            }
         return Task(
             id = newId,
             title = jsonNode.get("Title").asText(),
             registrationDateTime =
-                if (jsonNode.has(
-                        "RegistrationDateTime",
-                    )
-                ) {
-                    LocalDateTime.parse(jsonNode.get("RegistrationDateTime").asText())
-                } else {
-                    LocalDateTime.now()
-                },
+            registrationDateTime,
             endDateTime =
                 if (jsonNode.has(
                         "EndDateTime",
@@ -58,14 +62,30 @@ class TasksFactory {
                 ) {
                     LocalDateTime.parse(jsonNode.get("RegistrationDateTime").asText())
                 } else {
-                    LocalDateTime.now()
+                    registrationDateTime
                 },
-            importance = TaskImportanceType.VERY_HIGH,
-            urgency = false,
-            author = UUID.randomUUID(),
-            category = UUID.randomUUID(),
-            description = "",
-            percentage = 10,
+            importance =
+                if (jsonNode.has(
+                        "Importance",
+                    )
+                ) {
+                    TaskImportanceType.getByValue(jsonNode.get("Importance").asText())
+                } else {
+                    TaskImportanceType.REGULAR
+                },
+            urgency =
+                if (jsonNode.has(
+                        "Importance",
+                    )
+                ) {
+                    jsonNode.get("Urgency").asBoolean()
+                } else {
+                    false
+                },
+            author = authorUUID,
+            category = categoryUUID,
+            description = if (jsonNode.has("Description")) jsonNode.asText() else "",
+            percentage = if (jsonNode.has("Percentage")) jsonNode.asInt() else 0,
         )
     }
 }

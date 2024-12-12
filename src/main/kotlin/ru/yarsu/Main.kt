@@ -98,9 +98,10 @@ fun parseCommand(params: Array<String>): BaseCommand {
 fun createV1ApiRoutes(
     taskStorage: TaskStorage,
     userStorage: UserStorage,
+    categoryStorage: CategoryStorage,
 ): RoutingHttpHandler {
     val listTasksHandler = ListTasksHandler(taskStorage)
-    val taskByIdHandler = TaskByIdHandler(taskStorage, userStorage)
+    val taskByIdHandler = TaskByIdHandler(taskStorage, userStorage, categoryStorage)
     val listEisenhowerHandler = ListEisenhowerHandler(taskStorage)
     val listTimeHandler = ListTimeHandler(taskStorage)
     val statisticHandler = StatisticHandler(taskStorage)
@@ -130,7 +131,7 @@ fun createV2ApiRoutes(
     categoryStorage: CategoryStorage,
 ): RoutingHttpHandler {
     val listTasksHandler = ListTasksHandler(taskStorage)
-    val taskByIdHandler = TaskByIdHandler(taskStorage, userStorage)
+    val taskByIdHandler = TaskByIdHandler(taskStorage, userStorage, categoryStorage)
     val listEisenhowerHandler = ListEisenhowerHandler(taskStorage)
     val listTimeHandler = ListTimeHandler(taskStorage)
     val statisticHandler = StatisticHandler(taskStorage)
@@ -171,7 +172,7 @@ fun main(params: Array<String>) {
         val userStorage = UserStorage(users)
         val categoryStorage = CategoryStorage(categories)
 
-        val apiRoutes = createV1ApiRoutes(taskStorage, userStorage)
+        val apiRoutes = createV1ApiRoutes(taskStorage, userStorage, categoryStorage)
         val apiRoutesV2 = createV2ApiRoutes(taskStorage, userStorage, categoryStorage)
 
         val app: HttpHandler =

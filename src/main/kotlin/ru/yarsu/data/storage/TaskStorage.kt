@@ -19,5 +19,6 @@ class TaskStorage(
 
     override fun addTask(task: Task) {
         tasks.add(task)
+        TODO("write to csv")
     }
 }

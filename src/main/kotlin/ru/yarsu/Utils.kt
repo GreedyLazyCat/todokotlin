@@ -1,5 +1,7 @@
 package ru.yarsu
 
+import com.fasterxml.jackson.core.JsonParseException
+import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.jsonMapper
 import org.http4k.core.ContentType
@@ -8,14 +10,60 @@ import org.http4k.core.HttpHandler
 import org.http4k.core.Parameters
 import org.http4k.core.Request
 import org.http4k.core.Response
+import org.http4k.core.Status
 import org.http4k.core.findSingle
+import org.http4k.format.Jackson.asJsonObject
 import org.http4k.lens.contentType
 import ru.yarsu.commands.RequestException
+import ru.yarsu.data.storage.ICategoryStorage
 import java.time.DayOfWeek
 import java.time.format.TextStyle
-import java.util.Locale
+import java.util.*
 
 val elementsPerPageValues = listOf(5, 10, 20, 50)
+
+fun validateTaskBody(
+    bodyString: String,
+    categoryStorage: ICategoryStorage,
+): JsonNode {
+    try {
+        val jsonBody = bodyString.asJsonObject()
+        println(jsonBody.has("Title"))
+        if (!jsonBody.has("Title") || jsonBody.get("Title").asText().isEmpty()) {
+            throw RequestException(generateErrorBody("Title field is required"))
+        }
+        if (!jsonBody.has("Author") ||
+            jsonBody
+                .get("Author")
+                .asText()
+                .isEmpty()
+        ) {
+            throw RequestException(generateErrorBody("Author field is required"))
+        }
+        if (!jsonBody.has("Category") || jsonBody.get("Category").asText().isEmpty()) {
+            throw RequestException(generateErrorBody("Category field is required"))
+        }
+        val authorUUID = UUID.fromString(jsonBody.get("Author").asText())
+        val categoryUUID = UUID.fromString(jsonBody.get("Category").asText())
+        val category =
+            categoryStorage.getById(categoryUUID)
+                ?: throw RequestException(generateErrorBody("No such category", "$categoryUUID"))
+        if (category.owner != authorUUID) {
+            throw RequestException(
+                simpleMapStringToJsonString(
+                    mapOf(
+                        "AuthorId" to authorUUID.toString(),
+                        "CategoryOwnerId" to category.owner.toString(),
+                    ),
+                ),
+                Status.FORBIDDEN,
+            )
+        }
+        return jsonBody
+    } catch (e: JsonParseException) {
+        throw RequestException(generateErrorBody("Json parsing error", bodyString))
+    }
+}
 
 fun requestExceptionFilter(): Filter =
     Filter { next: HttpHandler ->
