@@ -11,6 +11,7 @@ import org.http4k.core.HttpHandler
 import org.http4k.core.Parameters
 import org.http4k.core.Request
 import org.http4k.core.Response
+import org.http4k.core.Status
 import org.http4k.core.findSingle
 import org.http4k.format.Jackson.asJsonObject
 import org.http4k.format.Jackson.mapper
@@ -19,6 +20,7 @@ import ru.yarsu.commands.RequestException
 import ru.yarsu.data.model.task.NoSuchTaskTypeException
 import ru.yarsu.data.model.task.TaskImportanceType
 import ru.yarsu.data.storage.ICategoryStorage
+import ru.yarsu.data.storage.IUserStorage
 import java.time.DayOfWeek
 import java.time.LocalDateTime
 import java.time.format.DateTimeParseException
@@ -31,11 +33,17 @@ val elementsPerPageValues = listOf(5, 10, 20, 50)
 fun validatedTaskBody(
     bodyString: String,
     categoryStorage: ICategoryStorage,
+    userStorage: IUserStorage,
 ): JsonNode {
     try {
         val jsonBody = bodyString.asJsonObject()
         val mapper = jsonMapper()
         val errorNode = mapper.createObjectNode()
+
+        val title =
+            validateField(jsonBody, "Title", errorNode, true) {
+                true to jsonBody.get("Title").asText()
+            }
 
         val registrtionDateTime =
             validateField<LocalDateTime>(jsonBody, "RegistrationDateTime", errorNode, false) {
@@ -102,10 +110,39 @@ fun validatedTaskBody(
                     false to null
                 }
             }
+        if (authorUUID != null) {
+            val author = userStorage.getById(authorUUID)
+            if (author == null) {
+                val node = mapper.createObjectNode()
+                node.put("Value", "$authorUUID")
+                node.put("Error", "Нет пользователя с таким id")
+                errorNode.putIfAbsent("Author", node)
+            }
+        }
 
+        if (categoryUUID != null && authorUUID != null) {
+            val category = categoryStorage.getById(categoryUUID)
+            if (category == null) {
+                val node = mapper.createObjectNode()
+                node.put("Value", "$categoryUUID")
+                node.put("Error", "Нет категории с таким id")
+                errorNode.putIfAbsent("Category", node)
+            } else if (category.owner != authorUUID && userStorage.getById(authorUUID) != null) {
+                throw RequestException(
+                    simpleMapStringToJsonString(
+                        mapOf(
+                            "AuthorId" to authorUUID.toString(),
+                            "CategoryOwnerId" to category.owner.toString(),
+                        ),
+                    ),
+                    Status.FORBIDDEN,
+                )
+            }
+        }
         if (!errorNode.isEmpty) {
             throw RequestException(mapper.writeValueAsString(errorNode))
         }
+
         return jsonBody
     } catch (e: JsonParseException) {
         throw RequestException(generateErrorBody("Json parsing error", mapper.createObjectNode().put("Value", "$bodyString")))

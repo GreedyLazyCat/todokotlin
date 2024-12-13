@@ -31,6 +31,9 @@ import ru.yarsu.handlers.v1.ListTimeHandler
 import ru.yarsu.handlers.v1.StatisticHandler
 import ru.yarsu.handlers.v1.TaskByIdHandler
 import ru.yarsu.handlers.v2.CreateTaskHandler
+import ru.yarsu.handlers.v2.DeleteUserHandler
+import ru.yarsu.handlers.v2.ReadCategoriesHandler
+import ru.yarsu.handlers.v2.ReadUsersHandler
 import ru.yarsu.handlers.v2.UpdateTaskHandler
 import java.io.File
 import java.io.FileNotFoundException
@@ -140,6 +143,11 @@ fun createV2ApiRoutes(
     val taskCreateHandler = CreateTaskHandler(taskStorage, userStorage, categoryStorage)
     val taskUpdateHandler = UpdateTaskHandler(categoryStorage, userStorage, taskStorage)
 
+    val readCategoriesHandler = ReadCategoriesHandler(categoryStorage, userStorage)
+
+    val readUsersHandler = ReadUsersHandler(userStorage)
+    val deleteUserHandler = DeleteUserHandler(userStorage)
+
     return jsonContentTypeFilter.then(requestExceptionFilter()).then(
         routes(
             "tasks" bind Method.GET to listTasksHandler,
@@ -149,10 +157,10 @@ fun createV2ApiRoutes(
             "tasks/eisenhower" bind Method.GET to listEisenhowerHandler,
             "tasks/by-time" bind Method.GET to listTimeHandler,
             "tasks/statistics" bind Method.GET to statisticHandler,
-            // TODO: categories GET list of all categories
+            "categories" bind Method.GET to readCategoriesHandler,
             // TODO: categories/{category-id} PUT payload - form!!!
-            // TODO: users GET list of all users
-            // TODO: users/{user-id} DELETE
+            "users" bind Method.GET to readUsersHandler,
+            "users/{user-id}" bind Method.DELETE to deleteUserHandler,
         ),
     )
 }

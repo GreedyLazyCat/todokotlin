@@ -3,7 +3,7 @@ package ru.yarsu.enum
 import ru.yarsu.data.model.task.NoSuchTaskTypeException
 
 enum class Color(
-    val values: List<String>,
+    val colorValues: List<String>,
 ) {
     BLACK(listOf("BLACK")),
     WHITE(listOf("WHITE")),
@@ -25,7 +25,7 @@ enum class Color(
     companion object {
         fun getByValue(byValue: String): Color {
             for (type in Color.entries) {
-                if (type.values.contains(byValue)) {
+                if (type.colorValues.contains(byValue)) {
                     return type
                 }
             }
@@ -33,5 +33,5 @@ enum class Color(
         }
     }
 
-    override fun toString(): String = values.first()
+    override fun toString(): String = colorValues.first()
 }

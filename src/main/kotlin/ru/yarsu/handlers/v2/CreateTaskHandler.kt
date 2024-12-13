@@ -27,7 +27,7 @@ class CreateTaskHandler(
 
     override fun invoke(request: Request): Response {
         val bodyString = request.bodyString()
-        val jsonNode = validatedTaskBody(bodyString, categoryStorage)
+        val jsonNode = validatedTaskBody(bodyString, categoryStorage, userStorage)
         val task = TasksFactory().createTaskFromJson(jsonNode)
         taskStorage.addTask(task)
         return Response(Status.CREATED).body(getCreatedBodyString(task.id.toString()))
