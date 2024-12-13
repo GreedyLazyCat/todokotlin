@@ -42,13 +42,22 @@ fun validatedTaskBody(
                 null
             }
         }
-        validateField(jsonBody, "Author", errorNode, true) {
-            try {
-                UUID.fromString(jsonBody.get("Author").asText())
-            } catch (e: IllegalArgumentException) {
-                null
+        val authorUUID =
+            validateField(jsonBody, "Author", errorNode, true) {
+                try {
+                    UUID.fromString(jsonBody.get("Author").asText())
+                } catch (e: IllegalArgumentException) {
+                    null
+                }
             }
-        }
+        val categoryUUID =
+            validateField(jsonBody, "Category", errorNode, true) {
+                try {
+                    UUID.fromString(jsonBody.get("Category").asText())
+                } catch (e: IllegalArgumentException) {
+                    null
+                }
+            }
 
         if (!errorNode.isEmpty) {
             throw RequestException(mapper.writeValueAsString(errorNode))
@@ -64,8 +73,8 @@ fun <T> validateField(
     field: String,
     errors: ObjectNode,
     required: Boolean,
-    typeCaster: () -> T?,
-) {
+    typeCaster: (() -> T?)? = null,
+): T? {
     val mapper = jsonMapper()
     val errorNode = mapper.createObjectNode()
     val node = jsonBody.get(field)
@@ -73,10 +82,10 @@ fun <T> validateField(
         errorNode.putIfAbsent("Value", node)
         errorNode.put("Error", "Это значение обязательно и не может быть пустым")
         errors.putIfAbsent(field, errorNode)
-        return
+        return null
     }
-    if (node == null) {
-        return
+    if (node == null || typeCaster == null) {
+        return null
     }
     val casted = typeCaster()
     if (casted == null) {
@@ -84,6 +93,7 @@ fun <T> validateField(
         errorNode.put("Error", "Значение передано в некорректном формате")
         errors.putIfAbsent(field, errorNode)
     }
+    return casted
 }
 
 fun tryParseUUID(str: String): UUID? {
