@@ -35,11 +35,18 @@ fun validatedTaskBody(
         val mapper = jsonMapper()
         val errorNode = mapper.createObjectNode()
 
-        validateField<LocalDateTime>(jsonBody, "RegistrationDateTime", errorNode, true) {
+        validateField<LocalDateTime>(jsonBody, "RegistrationDateTime", errorNode, false) {
             try {
                 LocalDateTime.parse(jsonBody.get("RegistrationDateTime").asText())
             } catch (e: DateTimeParseException) {
-                return@validateField null
+                null
+            }
+        }
+        validateField(jsonBody, "Author", errorNode, true) {
+            try {
+                UUID.fromString(jsonBody.get("Author").asText())
+            } catch (e: IllegalArgumentException) {
+                null
             }
         }
 
@@ -62,20 +69,20 @@ fun <T> validateField(
     val mapper = jsonMapper()
     val errorNode = mapper.createObjectNode()
     val node = jsonBody.get(field)
-    if (required && (node.isNull || node.asText().isEmpty())) {
+    if (required && (node == null || node.isNull || node.asText().isEmpty())) {
         errorNode.putIfAbsent("Value", node)
         errorNode.put("Error", "Это значение обязательно и не может быть пустым")
         errors.putIfAbsent(field, errorNode)
         return
     }
-    if (node.isEmpty) {
+    if (node == null) {
         return
     }
     val casted = typeCaster()
     if (casted == null) {
         errorNode.putIfAbsent("Value", node)
         errorNode.put("Error", "Значение передано в некорректном формате")
-        errors.put("", "")
+        errors.putIfAbsent(field, errorNode)
     }
 }
 
