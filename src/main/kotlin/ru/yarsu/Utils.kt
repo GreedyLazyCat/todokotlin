@@ -2,6 +2,7 @@ package ru.yarsu
 
 import com.fasterxml.jackson.core.JsonParseException
 import com.fasterxml.jackson.databind.JsonNode
+import com.fasterxml.jackson.databind.node.ObjectNode
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.jsonMapper
 import org.http4k.core.ContentType
@@ -10,7 +11,6 @@ import org.http4k.core.HttpHandler
 import org.http4k.core.Parameters
 import org.http4k.core.Request
 import org.http4k.core.Response
-import org.http4k.core.Status
 import org.http4k.core.findSingle
 import org.http4k.format.Jackson.asJsonObject
 import org.http4k.format.Jackson.mapper
@@ -18,13 +18,15 @@ import org.http4k.lens.contentType
 import ru.yarsu.commands.RequestException
 import ru.yarsu.data.storage.ICategoryStorage
 import java.time.DayOfWeek
+import java.time.LocalDateTime
+import java.time.format.DateTimeParseException
 import java.time.format.TextStyle
 import java.util.Locale
 import java.util.UUID
 
 val elementsPerPageValues = listOf(5, 10, 20, 50)
 
-fun validateTaskBody(
+fun validatedTaskBody(
     bodyString: String,
     categoryStorage: ICategoryStorage,
 ): JsonNode {
@@ -32,50 +34,17 @@ fun validateTaskBody(
         val jsonBody = bodyString.asJsonObject()
         val mapper = jsonMapper()
         val errorNode = mapper.createObjectNode()
-        if (!jsonBody.has("Title") || jsonBody.get("Title").asText().isEmpty()) {
-            val titleErrorNode = mapper.createObjectNode()
-            titleErrorNode.putIfAbsent("Value", jsonBody.get("Title"))
-            titleErrorNode.put("Error", "Задача не может быть пустой")
-            errorNode.putIfAbsent("Title", titleErrorNode)
-        }
-        if (!jsonBody.has("Author") ||
-            jsonBody
-                .get("Author")
-                .asText()
-                .isEmpty()
-        ) {
-            val authorErrorNode = mapper.createObjectNode()
-            authorErrorNode.putIfAbsent("Value", jsonBody.get("Author"))
-            authorErrorNode.put("Error", "Автор не может быть пустым")
-            errorNode.putIfAbsent("Author", authorErrorNode)
-        }
-        if (!jsonBody.has("Category") || jsonBody.get("Category").asText().isEmpty()) {
-            val value = mapper.createObjectNode()
-            value.putIfAbsent("Value", jsonBody.get("Category"))
-            value.put("Error", "Категория - обязательный параметр")
-            errorNode.putIfAbsent("Category", value)
-        }
 
-        val authorUUID = UUID.fromString(jsonBody.get("Author").asText())
-
-        val categoryUUID = UUID.fromString(jsonBody.get("Category").asText())
+        validateField<LocalDateTime>(jsonBody, "RegistrationDateTime", errorNode, true) {
+            try {
+                LocalDateTime.parse(jsonBody.get("RegistrationDateTime").asText())
+            } catch (e: DateTimeParseException) {
+                return@validateField null
+            }
+        }
 
         if (!errorNode.isEmpty) {
             throw RequestException(mapper.writeValueAsString(errorNode))
-        }
-        val category =
-            categoryStorage.getById(categoryUUID)
-                ?: throw RequestException(generateErrorBody("No such category", mapper.createObjectNode().put("Value", "$categoryUUID")))
-        if (category.owner != authorUUID) {
-            throw RequestException(
-                simpleMapStringToJsonString(
-                    mapOf(
-                        "AuthorId" to authorUUID.toString(),
-                        "CategoryOwnerId" to category.owner.toString(),
-                    ),
-                ),
-                Status.FORBIDDEN,
-            )
         }
         return jsonBody
     } catch (e: JsonParseException) {
@@ -84,9 +53,30 @@ fun validateTaskBody(
 }
 
 fun <T> validateField(
-    field: JsonNode,
+    jsonBody: JsonNode,
+    field: String,
+    errors: ObjectNode,
     required: Boolean,
+    typeCaster: () -> T?,
 ) {
+    val mapper = jsonMapper()
+    val errorNode = mapper.createObjectNode()
+    val node = jsonBody.get(field)
+    if (required && (node.isNull || node.asText().isEmpty())) {
+        errorNode.putIfAbsent("Value", node)
+        errorNode.put("Error", "Это значение обязательно и не может быть пустым")
+        errors.putIfAbsent(field, errorNode)
+        return
+    }
+    if (node.isEmpty) {
+        return
+    }
+    val casted = typeCaster()
+    if (casted == null) {
+        errorNode.putIfAbsent("Value", node)
+        errorNode.put("Error", "Значение передано в некорректном формате")
+        errors.put("", "")
+    }
 }
 
 fun tryParseUUID(str: String): UUID? {

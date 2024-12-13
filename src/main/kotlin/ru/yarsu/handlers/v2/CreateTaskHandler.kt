@@ -9,7 +9,7 @@ import ru.yarsu.data.factory.TasksFactory
 import ru.yarsu.data.storage.ICategoryStorage
 import ru.yarsu.data.storage.ITaskStorage
 import ru.yarsu.data.storage.IUserStorage
-import ru.yarsu.validateTaskBody
+import ru.yarsu.validatedTaskBody
 
 class CreateTaskHandler(
     val taskStorage: ITaskStorage,
@@ -27,7 +27,7 @@ class CreateTaskHandler(
 
     override fun invoke(request: Request): Response {
         val bodyString = request.bodyString()
-        val jsonNode = validateTaskBody(bodyString, categoryStorage)
+        val jsonNode = validatedTaskBody(bodyString, categoryStorage)
         val task = TasksFactory().createTaskFromJson(jsonNode)
         taskStorage.addTask(task)
         return Response(Status.CREATED).body(getCreatedBodyString(task.id.toString()))

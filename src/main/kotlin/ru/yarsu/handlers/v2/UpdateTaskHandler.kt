@@ -1,21 +1,16 @@
 package ru.yarsu.handlers.v2
 
 import com.fasterxml.jackson.databind.JsonNode
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import org.http4k.core.HttpHandler
 import org.http4k.core.Request
 import org.http4k.core.Response
 import org.http4k.core.Status
-import org.http4k.lens.Path
-import org.http4k.lens.uuid
-import ru.yarsu.commands.RequestException
 import ru.yarsu.data.model.task.Task
 import ru.yarsu.data.model.task.TaskImportanceType
 import ru.yarsu.data.storage.ICategoryStorage
 import ru.yarsu.data.storage.ITaskStorage
 import ru.yarsu.data.storage.IUserStorage
-import ru.yarsu.generateErrorBody
-import ru.yarsu.validateTaskBody
+import ru.yarsu.validatedTaskBody
 import java.time.LocalDateTime
 import java.util.UUID
 
@@ -82,16 +77,16 @@ class UpdateTaskHandler(
 
     override fun invoke(request: Request): Response {
         val bodyString = request.bodyString()
-        val jsonTask = validateTaskBody(bodyString, categoryStorage)
-        val uuidLens = Path.uuid().of("task-id")
-        val taskId = uuidLens(request)
-        val task =
-            taskStorage.getById(taskId)
-                ?: throw RequestException(
-                    generateErrorBody("Задача не найдена", jacksonObjectMapper().createObjectNode().put("Value", "$taskId")),
-                )
-        val editedTask = editedTask(task, jsonTask)
-        taskStorage.updateTask(editedTask)
+        val jsonTask = validatedTaskBody(bodyString, categoryStorage)
+//        val uuidLens = Path.uuid().of("task-id")
+//        val taskId = uuidLens(request)
+//        val task =
+//            taskStorage.getById(taskId)
+//                ?: throw RequestException(
+//                    generateErrorBody("Задача не найдена", jacksonObjectMapper().createObjectNode().put("Value", "$taskId")),
+//                )
+//        val editedTask = editedTask(task, jsonTask)
+//        taskStorage.updateTask(editedTask)
         return Response(Status.NO_CONTENT)
     }
 }
