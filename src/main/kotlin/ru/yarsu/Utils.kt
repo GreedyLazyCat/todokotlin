@@ -16,6 +16,8 @@ import org.http4k.format.Jackson.asJsonObject
 import org.http4k.format.Jackson.mapper
 import org.http4k.lens.contentType
 import ru.yarsu.commands.RequestException
+import ru.yarsu.data.model.task.NoSuchTaskTypeException
+import ru.yarsu.data.model.task.TaskImportanceType
 import ru.yarsu.data.storage.ICategoryStorage
 import java.time.DayOfWeek
 import java.time.LocalDateTime
@@ -35,27 +37,69 @@ fun validatedTaskBody(
         val mapper = jsonMapper()
         val errorNode = mapper.createObjectNode()
 
-        validateField<LocalDateTime>(jsonBody, "RegistrationDateTime", errorNode, false) {
-            try {
-                LocalDateTime.parse(jsonBody.get("RegistrationDateTime").asText())
-            } catch (e: DateTimeParseException) {
-                null
+        val registrtionDateTime =
+            validateField<LocalDateTime>(jsonBody, "RegistrationDateTime", errorNode, false) {
+                try {
+                    true to LocalDateTime.parse(jsonBody.get("RegistrationDateTime").asText())
+                } catch (e: DateTimeParseException) {
+                    false to null
+                }
             }
-        }
+
+        val startDateTime =
+            validateField<LocalDateTime>(jsonBody, "StartDateTime", errorNode, false) {
+                try {
+                    true to LocalDateTime.parse(jsonBody.get("StartDateTime").asText())
+                } catch (e: DateTimeParseException) {
+                    false to null
+                }
+            }
+
+        val endDateTime =
+            validateField<LocalDateTime?>(jsonBody, "EndDateTime", errorNode, false) {
+                if (jsonBody.get("EndDateTime").isNull) {
+                    return@validateField true to null
+                }
+                try {
+                    true to LocalDateTime.parse(jsonBody.get("EndDateTime").asText())
+                } catch (e: DateTimeParseException) {
+                    false to null
+                }
+            }
+
+        val importance =
+            validateField(jsonBody, "Importance", errorNode, false) {
+                try {
+                    true to TaskImportanceType.getByValue(jsonBody.get("Importance").asText())
+                } catch (e: NoSuchTaskTypeException) {
+                    false to null
+                }
+            }
+
+        val urgency =
+            validateField(jsonBody, "Urgency", errorNode, false) {
+                true to jsonBody.get("Urgency").asBoolean()
+            }
+
+        val percentage =
+            validateField(jsonBody, "Percentage", errorNode, false) {
+                true to jsonBody.get("Percentage").asInt()
+            }
+
         val authorUUID =
             validateField(jsonBody, "Author", errorNode, true) {
                 try {
-                    UUID.fromString(jsonBody.get("Author").asText())
+                    true to UUID.fromString(jsonBody.get("Author").asText())
                 } catch (e: IllegalArgumentException) {
-                    null
+                    false to null
                 }
             }
         val categoryUUID =
             validateField(jsonBody, "Category", errorNode, true) {
                 try {
-                    UUID.fromString(jsonBody.get("Category").asText())
+                    true to UUID.fromString(jsonBody.get("Category").asText())
                 } catch (e: IllegalArgumentException) {
-                    null
+                    false to null
                 }
             }
 
@@ -73,7 +117,7 @@ fun <T> validateField(
     field: String,
     errors: ObjectNode,
     required: Boolean,
-    typeCaster: (() -> T?)? = null,
+    typeCaster: (() -> Pair<Boolean, T?>)? = null,
 ): T? {
     val mapper = jsonMapper()
     val errorNode = mapper.createObjectNode()
@@ -88,12 +132,12 @@ fun <T> validateField(
         return null
     }
     val casted = typeCaster()
-    if (casted == null) {
+    if (!casted.first) {
         errorNode.putIfAbsent("Value", node)
         errorNode.put("Error", "Значение передано в некорректном формате")
         errors.putIfAbsent(field, errorNode)
     }
-    return casted
+    return casted.second
 }
 
 fun tryParseUUID(str: String): UUID? {
