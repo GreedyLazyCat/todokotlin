@@ -31,6 +31,7 @@ import ru.yarsu.handlers.v1.ListTimeHandler
 import ru.yarsu.handlers.v1.StatisticHandler
 import ru.yarsu.handlers.v1.TaskByIdHandler
 import ru.yarsu.handlers.v2.CreateTaskHandler
+import ru.yarsu.handlers.v2.UpdateTaskHandler
 import java.io.File
 import java.io.FileNotFoundException
 import kotlin.system.exitProcess
@@ -137,13 +138,14 @@ fun createV2ApiRoutes(
     val statisticHandler = StatisticHandler(taskStorage)
 
     val taskCreateHandler = CreateTaskHandler(taskStorage, userStorage, categoryStorage)
+    val taskUpdateHandler = UpdateTaskHandler(categoryStorage, userStorage, taskStorage)
 
     return jsonContentTypeFilter.then(requestExceptionFilter()).then(
         routes(
             "tasks" bind Method.GET to listTasksHandler,
             "tasks" bind Method.POST to taskCreateHandler,
             "tasks/{task-id}" bind Method.GET to taskByIdHandler,
-            // TODO: tasks/{task-id} PUT
+            "tasks/{task-id}" bind Method.PUT to taskUpdateHandler,
             "tasks/eisenhower" bind Method.GET to listEisenhowerHandler,
             "tasks/by-time" bind Method.GET to listTimeHandler,
             "tasks/statistics" bind Method.GET to statisticHandler,

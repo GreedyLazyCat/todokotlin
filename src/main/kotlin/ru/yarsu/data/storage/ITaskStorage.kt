@@ -14,4 +14,6 @@ interface ITaskStorage {
     fun getTasks(): List<Task>
 
     fun addTask(task: Task)
+
+    fun updateTask(task: Task)
 }

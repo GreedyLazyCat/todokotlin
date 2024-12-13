@@ -13,12 +13,14 @@ import org.http4k.core.Response
 import org.http4k.core.Status
 import org.http4k.core.findSingle
 import org.http4k.format.Jackson.asJsonObject
+import org.http4k.format.Jackson.mapper
 import org.http4k.lens.contentType
 import ru.yarsu.commands.RequestException
 import ru.yarsu.data.storage.ICategoryStorage
 import java.time.DayOfWeek
 import java.time.format.TextStyle
-import java.util.*
+import java.util.Locale
+import java.util.UUID
 
 val elementsPerPageValues = listOf(5, 10, 20, 50)
 
@@ -28,9 +30,13 @@ fun validateTaskBody(
 ): JsonNode {
     try {
         val jsonBody = bodyString.asJsonObject()
-        println(jsonBody.has("Title"))
+        val mapper = jsonMapper()
+        val errorNode = mapper.createObjectNode()
         if (!jsonBody.has("Title") || jsonBody.get("Title").asText().isEmpty()) {
-            throw RequestException(generateErrorBody("Title field is required"))
+            val titleErrorNode = mapper.createObjectNode()
+            titleErrorNode.putIfAbsent("Value", jsonBody.get("Title"))
+            titleErrorNode.put("Error", "Задача не может быть пустой")
+            errorNode.putIfAbsent("Title", titleErrorNode)
         }
         if (!jsonBody.has("Author") ||
             jsonBody
@@ -38,16 +44,28 @@ fun validateTaskBody(
                 .asText()
                 .isEmpty()
         ) {
-            throw RequestException(generateErrorBody("Author field is required"))
+            val authorErrorNode = mapper.createObjectNode()
+            authorErrorNode.putIfAbsent("Value", jsonBody.get("Author"))
+            authorErrorNode.put("Error", "Автор не может быть пустым")
+            errorNode.putIfAbsent("Author", authorErrorNode)
         }
         if (!jsonBody.has("Category") || jsonBody.get("Category").asText().isEmpty()) {
-            throw RequestException(generateErrorBody("Category field is required"))
+            val value = mapper.createObjectNode()
+            value.putIfAbsent("Value", jsonBody.get("Category"))
+            value.put("Error", "Категория - обязательный параметр")
+            errorNode.putIfAbsent("Category", value)
         }
+
         val authorUUID = UUID.fromString(jsonBody.get("Author").asText())
+
         val categoryUUID = UUID.fromString(jsonBody.get("Category").asText())
+
+        if (!errorNode.isEmpty) {
+            throw RequestException(mapper.writeValueAsString(errorNode))
+        }
         val category =
             categoryStorage.getById(categoryUUID)
-                ?: throw RequestException(generateErrorBody("No such category", "$categoryUUID"))
+                ?: throw RequestException(generateErrorBody("No such category", mapper.createObjectNode().put("Value", "$categoryUUID")))
         if (category.owner != authorUUID) {
             throw RequestException(
                 simpleMapStringToJsonString(
@@ -61,7 +79,21 @@ fun validateTaskBody(
         }
         return jsonBody
     } catch (e: JsonParseException) {
-        throw RequestException(generateErrorBody("Json parsing error", bodyString))
+        throw RequestException(generateErrorBody("Json parsing error", mapper.createObjectNode().put("Value", "$bodyString")))
+    }
+}
+
+fun <T> validateField(
+    field: JsonNode,
+    required: Boolean,
+) {
+}
+
+fun tryParseUUID(str: String): UUID? {
+    try {
+        return UUID.fromString(str)
+    } catch (e: IllegalArgumentException) {
+        return null
     }
 }
 
@@ -91,13 +123,15 @@ val jsonContentTypeFilter =
 
 fun generateErrorBody(
     text: String,
-    value: String? = "",
+    args: JsonNode? = null,
 ): String {
     val mapper = jacksonObjectMapper()
     val node = mapper.createObjectNode()
     node.put("Error", text)
-    if (value != null) {
-        node.put("Value", value)
+    if (args != null) {
+        for (entry in args.fields()) {
+            node.putIfAbsent(entry.key, entry.value)
+        }
     }
     return mapper.writeValueAsString(node)
 }

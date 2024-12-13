@@ -19,6 +19,13 @@ class TaskStorage(
 
     override fun addTask(task: Task) {
         tasks.add(task)
-        TODO("write to csv")
+//        TODO("write to csv")
+    }
+
+    override fun updateTask(task: Task) {
+        val taskIndex = tasks.indexOfFirst { it.id == task.id }
+        if (taskIndex != -1) {
+            tasks[taskIndex] = task
+        }
     }
 }

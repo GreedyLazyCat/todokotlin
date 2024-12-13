@@ -19,7 +19,9 @@ class CreateTaskHandler(
     fun getCreatedBodyString(createdId: String): String {
         val mapper = jsonMapper()
         val node = mapper.createObjectNode()
+
         node.put("Id", createdId)
+
         return mapper.writeValueAsString(node)
     }
 
