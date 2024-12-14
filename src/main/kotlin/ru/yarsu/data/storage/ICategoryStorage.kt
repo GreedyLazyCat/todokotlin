@@ -9,4 +9,6 @@ interface ICategoryStorage {
     fun sortedWith(comparator: Comparator<in Category>): List<Category>
 
     fun filter(func: (Category) -> Boolean): List<Category>
+
+    fun update(category: Category): Boolean
 }

@@ -15,6 +15,7 @@ import org.http4k.core.Status
 import org.http4k.core.findSingle
 import org.http4k.format.Jackson.asJsonObject
 import org.http4k.format.Jackson.mapper
+import org.http4k.lens.LensFailure
 import org.http4k.lens.contentType
 import ru.yarsu.commands.RequestException
 import ru.yarsu.data.model.task.NoSuchTaskTypeException
@@ -184,6 +185,18 @@ fun tryParseUUID(str: String): UUID? {
         return null
     }
 }
+
+fun lensFailureFilter(): Filter =
+    Filter { next: HttpHandler ->
+        { request: Request ->
+            try {
+                next(request)
+            } catch (lensFailure: LensFailure) {
+                Response(Status.BAD_REQUEST)
+                    .body("{\"Error\":\"${lensFailure.message}\"}")
+            }
+        }
+    }
 
 fun requestExceptionFilter(): Filter =
     Filter { next: HttpHandler ->

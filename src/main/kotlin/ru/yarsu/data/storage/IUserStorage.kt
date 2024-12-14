@@ -9,4 +9,6 @@ interface IUserStorage {
     fun sortedWith(comparator: Comparator<in User>): List<User>
 
     fun filter(func: (User) -> Boolean): List<User>
+
+    fun deleteUser(id: UUID): Boolean
 }
