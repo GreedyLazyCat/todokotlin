@@ -145,7 +145,7 @@ fun createV2ApiRoutes(
     val taskUpdateHandler = UpdateTaskHandler(categoryStorage, userStorage, taskStorage)
 
     val readCategoriesHandler = ReadCategoriesHandler(categoryStorage, userStorage)
-    val updateCategoryHandler = UpdateCategoryHandler(categoryStorage, userStorage)
+    val updateCategoryHandler = UpdateCategoryHandler(categoryStorage, userStorage, taskStorage)
 
     val readUsersHandler = ReadUsersHandler(userStorage)
     val deleteUserHandler = DeleteUserHandler(userStorage, categoryStorage, taskStorage)
