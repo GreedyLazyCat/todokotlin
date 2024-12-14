@@ -3,6 +3,7 @@ package ru.yarsu
 import com.beust.jcommander.JCommander
 import com.beust.jcommander.ParameterException
 import com.github.doyaaaaaken.kotlincsv.dsl.csvReader
+import com.github.doyaaaaaken.kotlincsv.dsl.csvWriter
 import org.http4k.core.ContentType
 import org.http4k.core.HttpHandler
 import org.http4k.core.Method
@@ -23,6 +24,9 @@ import ru.yarsu.data.model.Category
 import ru.yarsu.data.model.task.Task
 import ru.yarsu.data.model.task.User
 import ru.yarsu.data.storage.CategoryStorage
+import ru.yarsu.data.storage.ICategoryStorage
+import ru.yarsu.data.storage.ITaskStorage
+import ru.yarsu.data.storage.IUserStorage
 import ru.yarsu.data.storage.TaskStorage
 import ru.yarsu.data.storage.UserStorage
 import ru.yarsu.handlers.v1.ListEisenhowerHandler
@@ -38,6 +42,8 @@ import ru.yarsu.handlers.v2.UpdateCategoryHandler
 import ru.yarsu.handlers.v2.UpdateTaskHandler
 import java.io.File
 import java.io.FileNotFoundException
+import java.util.*
+import kotlin.concurrent.thread
 import kotlin.system.exitProcess
 
 fun parseTasks(filePath: String): List<Task> {
@@ -167,6 +173,95 @@ fun createV2ApiRoutes(
     )
 }
 
+fun saveTasks(
+    taskStorage: ITaskStorage,
+    path: String,
+) {
+    val tasks = taskStorage.getTasks()
+    csvWriter().open(path) {
+        writeRow(
+            listOf(
+                "Id",
+                "Title",
+                "RegistrationDateTime",
+                "StartDateTime",
+                "EndDateTime",
+                "Importance",
+                "Urgency",
+                "Percentage",
+                "Description",
+                "Author",
+                "Category",
+            ),
+        )
+        for (task in tasks) {
+            writeRow(
+                task.id,
+                task.title,
+                task.registrationDateTime,
+                task.startDateTime,
+                task.endDateTime,
+                task.importance.eValue,
+                task.urgency,
+                task.percentage,
+                task.description,
+                task.author,
+                task.category,
+            )
+        }
+    }
+}
+
+fun saveUsers(
+    userStorage: IUserStorage,
+    path: String,
+) {
+    val users = userStorage.getUsers()
+    csvWriter().open(path) {
+        writeRow(
+            listOf(
+                "Id",
+                "Login",
+                "RegistrationDateTime",
+                "Email",
+            ),
+        )
+        for (user in users) {
+            writeRow(
+                user.id,
+                user.login,
+                user.registrationDateTime,
+                user.email,
+            )
+        }
+    }
+}
+
+fun saveCategories(
+    categoryStorage: ICategoryStorage,
+    path: String,
+) {
+    val categories = categoryStorage.getCategories()
+    csvWriter().open(path) {
+        writeRow(
+            listOf(
+                "Id",
+                "Description",
+                "Color",
+                "Owner",
+            ),
+        )
+        for (category in categories) {
+            writeRow(
+                category.id,
+                category.description,
+                category.color.colorValues.first(),
+                category.owner,
+            )
+        }
+    }
+}
+
 fun main(params: Array<String>) {
     try {
 //        val mockParams =
@@ -175,6 +270,8 @@ fun main(params: Array<String>) {
 //                "--users-file=src/main/resources/users.csv",
 //                "--port=9000",
 //            )
+
+//        exitProcess(0)
         val command = parseCommand(params)
         val tasks = parseTasks(command.tasksFile ?: "")
         val users = parseUsers(command.usersFile ?: "")
@@ -187,6 +284,13 @@ fun main(params: Array<String>) {
         val apiRoutes = createV1ApiRoutes(taskStorage, userStorage, categoryStorage)
         val apiRoutesV2 = createV2ApiRoutes(taskStorage, userStorage, categoryStorage)
 
+        Runtime.getRuntime().addShutdownHook(
+            thread(false, block = {
+                saveTasks(taskStorage, command.tasksFile ?: "")
+                saveUsers(userStorage, command.usersFile ?: "")
+                saveCategories(categoryStorage, command.categoriesFile ?: "")
+            }),
+        )
         val app: HttpHandler =
             routes(
                 "ping" bind Method.GET to {

@@ -11,4 +11,8 @@ interface IUserStorage {
     fun filter(func: (User) -> Boolean): List<User>
 
     fun deleteUser(id: UUID): Boolean
+
+    fun getUsers(): List<User>
+
+    fun addUser(user: User)
 }

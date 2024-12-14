@@ -22,4 +22,10 @@ class UserStorage(
         users.removeAt(index)
         return true
     }
+
+    override fun getUsers(): List<User> = users.toList()
+
+    override fun addUser(user: User) {
+        users.add(user)
+    }
 }

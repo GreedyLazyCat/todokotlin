@@ -44,7 +44,7 @@ fun validatedTaskBody(
         val title =
             validateField(jsonBody, "Title", errorNode, true) {
                 val titleNode = jsonBody.get("Title")
-                if (titleNode.isNumber || titleNode.isNull || titleNode.isBoolean) {
+                if (!titleNode.isTextual) {
                     return@validateField false to titleNode
                 }
 
@@ -101,7 +101,17 @@ fun validatedTaskBody(
 
         val percentage =
             validateField(jsonBody, "Percentage", errorNode, false) {
-                true to jsonBody.get("Percentage").asInt()
+                val percentageNode = jsonBody.get("Percentage")
+
+                if (percentageNode.isTextual) {
+                    return@validateField false to percentageNode
+                }
+
+                val percentage = percentageNode.asText().toIntOrNull() ?: return@validateField false to percentageNode
+                if (percentage < 0 || percentage > 100) {
+                    return@validateField false to percentageNode
+                }
+                true to percentage
             }
 
         val authorUUID =

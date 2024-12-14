@@ -11,4 +11,6 @@ interface ICategoryStorage {
     fun filter(func: (Category) -> Boolean): List<Category>
 
     fun update(category: Category): Boolean
+
+    fun getCategories(): List<Category>
 }

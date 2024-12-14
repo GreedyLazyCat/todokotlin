@@ -22,4 +22,6 @@ class CategoryStorage(
         categories[index] = category
         return true
     }
+
+    override fun getCategories(): List<Category> = categories.toList()
 }
