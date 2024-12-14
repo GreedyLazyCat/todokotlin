@@ -43,7 +43,12 @@ fun validatedTaskBody(
 
         val title =
             validateField(jsonBody, "Title", errorNode, true) {
-                true to jsonBody.get("Title").asText()
+                val titleNode = jsonBody.get("Title")
+                if (titleNode.isNumber || titleNode.isNull || titleNode.isBoolean) {
+                    return@validateField false to titleNode
+                }
+
+                return@validateField true to jsonBody.get("Title").asText()
             }
 
         val registrtionDateTime =
@@ -87,6 +92,10 @@ fun validatedTaskBody(
 
         val urgency =
             validateField(jsonBody, "Urgency", errorNode, false) {
+                val urgency = jsonBody.get("Urgency")
+                if (!urgency.isBoolean) {
+                    return@validateField false to urgency
+                }
                 true to jsonBody.get("Urgency").asBoolean()
             }
 

@@ -38,7 +38,13 @@ class UpdateCategoryHandler(
         val errorNode = mapper.createObjectNode()
 
         try {
-            descriptionField(form)
+            val description = descriptionField(form)
+            if (description.isEmpty()) {
+                val node = mapper.createObjectNode()
+                node.put("Value", "")
+                node.put("Error", "Отсутствует поле description")
+                errorNode.putIfAbsent("Description", node)
+            }
         } catch (e: LensFailure) {
             val node = mapper.createObjectNode()
             node.putIfAbsent("Value", null)
@@ -47,20 +53,19 @@ class UpdateCategoryHandler(
         }
         try {
             val owner = ownerField(form)
-            if (owner != "null") {
+            if (owner.lowercase() != "null") {
                 val ownerUUID = tryParseUUID(owner)
                 if (ownerUUID == null) {
                     val node = mapper.createObjectNode()
                     node.put("Value", owner)
                     node.put("Error", "Некорректный формат Owner")
                     errorNode.putIfAbsent("Owner", node)
-                } else if (userStorage.getById(ownerUUID) == null)
-                    {
-                        val node = mapper.createObjectNode()
-                        node.put("Value", owner)
-                        node.put("Error", "Не существует owner с таким id")
-                        errorNode.putIfAbsent("Owner", node)
-                    }
+                } else if (userStorage.getById(ownerUUID) == null) {
+                    val node = mapper.createObjectNode()
+                    node.put("Value", owner)
+                    node.put("Error", "Не существует owner с таким id")
+                    errorNode.putIfAbsent("Owner", node)
+                }
             }
         } catch (e: LensFailure) {
             val node = mapper.createObjectNode()
@@ -80,7 +85,7 @@ class UpdateCategoryHandler(
         newOwnerString: String,
     ) {
         val mapper = jsonMapper()
-        val newOwner = if (newOwnerString == "null") null else UUID.fromString(newOwnerString)
+        val newOwner = if (newOwnerString.lowercase() == "null") null else UUID.fromString(newOwnerString)
         if (category.owner == null && newOwner != null) {
             val anotherOwnerTasks = taskStorage.filter { it.author != newOwner && it.category == category.id }
             if (anotherOwnerTasks.isNotEmpty()) {
@@ -112,8 +117,8 @@ class UpdateCategoryHandler(
         val categoryLens = Path.uuid().of("category-id")
         val categoryUUID = categoryLens(request)
 
-        val descriptionField = FormField.string().required("Description")
-        val ownerField = FormField.string().required("Owner")
+        val descriptionField = FormField.string().required("description")
+        val ownerField = FormField.string().required("owner")
         val formLens =
             Body
                 .webForm(Validator.Feedback, descriptionField, ownerField)

@@ -75,7 +75,7 @@ class TasksFactory {
                 },
             urgency =
                 if (jsonNode.has(
-                        "Importance",
+                        "Urgency",
                     )
                 ) {
                     jsonNode.get("Urgency").asBoolean()
@@ -84,8 +84,8 @@ class TasksFactory {
                 },
             author = authorUUID,
             category = categoryUUID,
-            description = if (jsonNode.has("Description")) jsonNode.asText() else "",
-            percentage = if (jsonNode.has("Percentage")) jsonNode.asInt() else 0,
+            description = if (jsonNode.has("Description")) jsonNode.get("Description").asText() else "",
+            percentage = if (jsonNode.has("Percentage")) jsonNode.get("Percentage").asInt() else 0,
         )
     }
 }

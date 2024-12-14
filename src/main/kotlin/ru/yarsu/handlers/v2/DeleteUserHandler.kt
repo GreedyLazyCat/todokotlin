@@ -27,27 +27,23 @@ class DeleteUserHandler(
         val mapper = jsonMapper()
         val resultNode = mapper.createObjectNode()
 
-        if (userCategories.isNotEmpty()) {
-            val arrayNode = mapper.createArrayNode()
-            for (category in userCategories) {
-                val categoryNode = mapper.createObjectNode()
-                categoryNode.put("Id", "${category.id}")
-                categoryNode.put("Description", "${category.description}")
-                arrayNode.add(categoryNode)
-            }
-            resultNode.putIfAbsent("Categories", arrayNode)
+        var arrayNode = mapper.createArrayNode()
+        for (category in userCategories) {
+            val categoryNode = mapper.createObjectNode()
+            categoryNode.put("Id", "${category.id}")
+            categoryNode.put("Description", "${category.description}")
+            arrayNode.add(categoryNode)
         }
+        resultNode.putIfAbsent("Categories", arrayNode)
 
-        if (userTasks.isNotEmpty()) {
-            val arrayNode = mapper.createArrayNode()
-            for (task in userTasks) {
-                val categoryNode = mapper.createObjectNode()
-                categoryNode.put("Id", "${task.id}")
-                categoryNode.put("Title", "${task.description}")
-                arrayNode.add(categoryNode)
-            }
-            resultNode.putIfAbsent("Tasks", arrayNode)
+        arrayNode = mapper.createArrayNode()
+        for (task in userTasks) {
+            val categoryNode = mapper.createObjectNode()
+            categoryNode.put("Id", "${task.id}")
+            categoryNode.put("Title", "${task.title}")
+            arrayNode.add(categoryNode)
         }
+        resultNode.putIfAbsent("Tasks", arrayNode)
 
         return mapper.writeValueAsString(resultNode)
     }

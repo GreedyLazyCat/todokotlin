@@ -28,8 +28,8 @@ class TaskByIdHandler(
     ): String {
         val mapper = jacksonObjectMapper()
         val node = mapper.createObjectNode()
-        node.put("task-id", taskId)
-        node.put("error", errorMessage)
+        node.put("TaskId", taskId)
+        node.put("Error", errorMessage)
 
         return mapper.writeValueAsString(node)
     }
