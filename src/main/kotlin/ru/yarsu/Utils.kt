@@ -113,7 +113,15 @@ fun validatedTaskBody(
                 }
                 true to percentage
             }
+        val description =
+            validateField(jsonBody, "Description", errorNode, false) {
+                val descriptionNode = jsonBody.get("Description")
+                if (!descriptionNode.isTextual) {
+                    return@validateField false to descriptionNode
+                }
 
+                return@validateField true to jsonBody.get("Description").asText()
+            }
         val authorUUID =
             validateField(jsonBody, "Author", errorNode, true) {
                 try {

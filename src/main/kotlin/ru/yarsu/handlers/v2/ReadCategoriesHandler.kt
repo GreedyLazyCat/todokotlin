@@ -23,9 +23,10 @@ class ReadCategoriesHandler(
                 val categoryOwner = userStorage.getById(category.owner)
                 if (categoryOwner != null) {
                     categoryNode.put("OwnerName", categoryOwner.login)
-                } else {
-                    categoryNode.put("OwnerName", "Общая")
                 }
+            } else {
+                categoryNode.putIfAbsent("Owner", null)
+                categoryNode.put("OwnerName", "Общая")
             }
             arrayNode.add(categoryNode)
         }

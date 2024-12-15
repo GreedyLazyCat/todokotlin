@@ -82,14 +82,15 @@ class UpdateTaskHandler(
 
     override fun invoke(request: Request): Response {
         val bodyString = request.bodyString()
-        val jsonTask = validatedTaskBody(bodyString, categoryStorage, userStorage)
         val uuidLens = Path.uuid().of("task-id")
         val taskId = uuidLens(request)
         val task =
             taskStorage.getById(taskId)
                 ?: throw RequestException(
-                    generateErrorBody("Задача не найдена", jacksonObjectMapper().createObjectNode().put("Value", "$taskId")),
+                    generateErrorBody("Задача не найдена", jacksonObjectMapper().createObjectNode().put("TaskId", "$taskId")),
+                    Status.NOT_FOUND,
                 )
+        val jsonTask = validatedTaskBody(bodyString, categoryStorage, userStorage)
         val editedTask = editedTask(task, jsonTask)
         taskStorage.updateTask(editedTask)
         return Response(Status.NO_CONTENT)

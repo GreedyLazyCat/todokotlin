@@ -42,7 +42,6 @@ import ru.yarsu.handlers.v2.UpdateCategoryHandler
 import ru.yarsu.handlers.v2.UpdateTaskHandler
 import java.io.File
 import java.io.FileNotFoundException
-import java.util.*
 import kotlin.concurrent.thread
 import kotlin.system.exitProcess
 
@@ -256,7 +255,7 @@ fun saveCategories(
                 category.id,
                 category.description,
                 category.color.colorValues.first(),
-                category.owner,
+                category.owner ?: "",
             )
         }
     }

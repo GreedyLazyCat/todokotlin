@@ -39,12 +39,12 @@ class UpdateCategoryHandler(
 
         try {
             val description = descriptionField(form)
-            if (description.isEmpty()) {
-                val node = mapper.createObjectNode()
-                node.put("Value", "")
-                node.put("Error", "Отсутствует поле description")
-                errorNode.putIfAbsent("Description", node)
-            }
+//            if (description.isEmpty()) {
+//                val node = mapper.createObjectNode()
+//                node.put("Value", "")
+//                node.put("Error", "Отсутствует поле description")
+//                errorNode.putIfAbsent("Description", node)
+//            }
         } catch (e: LensFailure) {
             val node = mapper.createObjectNode()
             node.putIfAbsent("Value", null)
@@ -117,8 +117,8 @@ class UpdateCategoryHandler(
         val categoryLens = Path.uuid().of("category-id")
         val categoryUUID = categoryLens(request)
 
-        val descriptionField = FormField.string().required("description")
-        val ownerField = FormField.string().required("owner")
+        val descriptionField = FormField.string().required("Description")
+        val ownerField = FormField.string().required("Owner")
         val formLens =
             Body
                 .webForm(Validator.Feedback, descriptionField, ownerField)
